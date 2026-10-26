@@ -1,0 +1,28 @@
+flowchart TD
+    %% ── 1. Ingestion & Multi-Course Batch Processing ──
+    A["👤 USER INPUT\n📄 Multi-PDF Upload\n(st.file_uploader, accept_multiple_files)"] --> B["🏷️ Course Tagger\n(Infer course code from filename/header)"]
+
+    %% ── 2. Extraction & Parsing Engine ──
+    B --> C["📋 Table & Text Extractor\n(pdfplumber: extract_tables + extract_text)"]
+    C --> D["🔍 Regex Classifier\n(re: HW / Quiz / Exam / Project / Lab)"]
+    D --> E["📅 Date Normalizer\n(python-dateutil: fuzzy parse → ISO 8601)"]
+
+    %% ── 3. Human-in-the-Loop Validation & Warnings ──
+    E --> F{"Ambiguity\nDetected?"}
+    F -- "Clear date" --> G["✅ Status: Verified"]
+    F -- "Relative / TBD" --> H["⚠️ Status: Needs Review\n(Flag for user)"]
+    G --> I["📊 Master DataFrame\n(pandas: aggregate all courses)"]
+    H --> I
+
+    %% ── Manual Recurring Task Generator ──
+    J["👤 USER INPUT\n🔁 Add Recurring Task Form\n(st.form: course, title template,\ncadence, date range, due time)"] --> K["⏱️ Recurrence Generator\n(dateutil.rrule)"]
+    K --> I
+
+    %% ── Interactive Editing ──
+    I --> L["✏️ Interactive Review Table\n(st.data_editor: edit / confirm flagged items)"]
+
+    %% ── 4. Interactive In-App Monthly Calendar ──
+    L --> M["📆 Month Dropdown Selector\n(st.selectbox: Sep, Oct, Nov, Dec …)"]
+
+    %% ── 5. Export ──
+    L --> P["📥 .ics Download\n(ics library: RFC 5545 + 24h alarm)"]
